@@ -1,11 +1,20 @@
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
 from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "jobapp@#1234"
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///data.db"
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USER_NAME'] = 'ragkan1499@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ftry cjex ypoh uwdt'
+
 db = SQLAlchemy(app)
+
+mail = Mail(app)
 
 class Form(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +38,18 @@ def index():
         form = Form(first_name=first_name, last_name=last_name, email=email,date=date_obj, occupation=occupation)
         db.session.add(form)
         db.session.commit()
+        
+        message_body = f"Thanks for your submission, {first_name}."\
+                       f"Here is your data: \n{first_name}\n{last_name}\n{date}\n{occupation}"\
+                        "Have a great day!"
+        
+        message = Message(subject='New Form Submission',
+                          sender=app.config['MAIL_USER_NAME'],
+                          recipients=[email],  # recipients expects a list as its argument
+                          body=message_body)
+        
         flash(f'{first_name}, your form was submitted successfully!', 'success')
+        return redirect(url_for('index'))
         
     return render_template("index.html")
 
